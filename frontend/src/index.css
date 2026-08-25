@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Institutional Fintech Color Palette */
+  --bg-deep: #07090D;
+  --bg-surface: #10141B;
+  --bg-elevated: #151A22;
+
+  --fintech-blue: #2F80FF;
+  --bright-blue: #4DA3FF;
+  --reconciled-teal: #00BFA6;
+  --ai-violet: #8B5CF6;
+
+  --status-success: #00BFA6;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+
+  --text-primary: #F5F7FA;
+  --text-secondary: #8993A3;
+  --text-muted: #5A6474;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+  background-color: var(--bg-deep);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--bg-deep);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(47, 128, 255, 0.35);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Glassmorphism Fintech Cards */
+.fintech-glass-panel {
+  background: rgba(16, 20, 27, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.fintech-glass-hud {
+  background: rgba(21, 26, 34, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Subtle Grid Background Pattern */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Custom iOS-style Slider Styling */
+.ios-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  position: relative;
+}
+
+.ios-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ios-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.ios-slider::-webkit-slider-thumb:active {
+  transform: scale(0.98);
+}
