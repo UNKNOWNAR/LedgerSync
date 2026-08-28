@@ -46,13 +46,7 @@ export default function HeaderNav({ onLaunchClick }: HeaderNavProps) {
         >
           Architecture
         </button>
-        <button
-          type="button"
-          onClick={() => scrollToSection('how-it-works')}
-          className="hover:text-[#F5F7FA] transition-colors cursor-pointer"
-        >
-          How It Works
-        </button>
+
         <a
           href="https://github.com"
           target="_blank"

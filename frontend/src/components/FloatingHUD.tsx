@@ -120,8 +120,8 @@ export default function FloatingHUD() {
             </span>
           </div>
 
-          <div className="pt-2 flex items-center justify-between text-[0.58rem] font-mono text-[#8993A3]">
-            <span className="text-[#8B5CF6]">CLAUDE 3.5</span>
+          <div className="flex items-center justify-between text-[0.6rem] font-mono tracking-wider font-bold">
+            <span className="text-[#8B5CF6]">NEURAL LLM</span>
             <span className="text-[#00BFA6]">AUDIT VERIFIED</span>
           </div>
         </motion.div>

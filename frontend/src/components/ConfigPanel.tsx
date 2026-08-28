@@ -104,8 +104,8 @@ export default function ConfigPanel({ config, onChange }: ConfigPanelProps) {
           <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3 mt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-purple-400" />
-                <span className="text-xs font-medium text-[#F5F7FA]">Claude Reasoning</span>
+                <Sparkles size={16} className="text-[#8B5CF6]" />
+                <span className="text-xs font-medium text-[#F5F7FA]">LLM Reasoning</span>
               </div>
               <button
                 type="button"

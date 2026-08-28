@@ -40,14 +40,14 @@ const pipelineStages = [
   },
   {
     step: '04',
-    title: 'Tier 3 — Claude AI Exception Reasoning',
+    title: 'Tier 3 — Deep LLM Exception Reasoning',
     subtitle: 'LLM Multi-Record Discrepancy Analysis',
     icon: Cpu,
     badge: 'Autonomous AI',
     color: 'text-[#8B5CF6]',
     borderColor: 'border-[#8B5CF6]/30',
     bgColor: 'bg-[#8B5CF6]/10',
-    description: 'Deploys Claude 3.5 Sonnet / Haiku to reason over unresolved edge cases, interchange fee rollups, partial payouts, and complex multi-record splits.',
+    description: 'Deploys an advanced Large Language Model to reason over unresolved edge cases, interchange fee rollups, partial payouts, and complex multi-record splits.',
     metrics: ['Confidence Score', 'Natural Language Rationale', 'Edge-Case Resolution'],
   },
   {

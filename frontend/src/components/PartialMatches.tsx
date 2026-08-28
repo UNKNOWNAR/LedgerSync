@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Check, X, Sparkles, AlertCircle } from 'lucide-react'
+import { ChevronDown, Check, X, Cpu, AlertCircle } from 'lucide-react'
 import type { MatchResult, Transaction } from '../types'
 
 function RecordCard({ tx, label }: { tx: Transaction | null; label: string }) {
@@ -164,9 +164,9 @@ export default function PartialMatches({ matches }: { matches: MatchResult[] }) 
 
                     {m.llm_reasoning && (
                       <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-1">
-                        <div className="flex items-center gap-1.5 text-purple-300 text-xs font-semibold">
-                          <Sparkles size={14} />
-                          <span>Claude AI Resolution Synthesis</span>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5F7FA] mb-2">
+                          <Cpu size={14} className="text-[#4DA3FF]" />
+                          <span>Resolution Synthesis</span>
                         </div>
                         <p className="text-xs text-purple-100/90 leading-relaxed font-normal">
                           {m.llm_reasoning}

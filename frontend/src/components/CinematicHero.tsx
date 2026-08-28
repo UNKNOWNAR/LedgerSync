@@ -1,14 +1,27 @@
-import { motion } from 'framer-motion'
-import { ArrowDown, Cpu, ShieldCheck, Zap, Layers } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowDown, Cpu, Layers } from 'lucide-react'
+import Spline from '@splinetool/react-spline'
 import HeaderNav from './HeaderNav'
-import FinancialCore3D from './FinancialCore3D'
-import FloatingHUD from './FloatingHUD'
 
 interface CinematicHeroProps {
   onLaunchClick?: () => void
 }
 
 export default function CinematicHero({ onLaunchClick }: CinematicHeroProps) {
+  const [splineLoaded, setSplineLoaded] = useState(false)
+  const splineContainerRef = useRef<HTMLDivElement>(null)
+
+  // Intercept wheel events in capture phase before they reach the Spline canvas
+  // This prevents Spline's built-in scroll-to-zoom while keeping page scroll intact
+  useEffect(() => {
+    const el = splineContainerRef.current
+    if (!el) return
+    const stopWheelZoom = (e: WheelEvent) => e.stopPropagation()
+    el.addEventListener('wheel', stopWheelZoom, { capture: true, passive: true })
+    return () => el.removeEventListener('wheel', stopWheelZoom, { capture: true })
+  }, [])
+
   const scrollToApp = () => {
     if (onLaunchClick) {
       onLaunchClick()
@@ -24,168 +37,151 @@ export default function CinematicHero({ onLaunchClick }: CinematicHeroProps) {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-[#07090D] text-[#F5F7FA] overflow-hidden flex flex-col justify-between">
-      {/* Top Header Navigation */}
-      <HeaderNav onLaunchClick={scrollToApp} />
-
-      {/* Ambient Radial Gradient Glows - Deep Financial Environment */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[550px] bg-gradient-to-tr from-[#2F80FF]/15 via-[#00BFA6]/10 to-[#8B5CF6]/5 blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-[#00BFA6]/5 blur-[130px] pointer-events-none" />
-
-      {/* 0.2s Grid Pattern Background with Staggered Fade */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.35 }}
-        transition={{ duration: 1.0, delay: 0.2 }}
-        className="absolute inset-0 bg-grid-pattern pointer-events-none"
-      />
-
-      {/* Hero Body Content */}
-      <div className="relative pt-24 pb-12 px-6 sm:px-12 max-w-7xl mx-auto w-full flex-1 flex flex-col justify-center items-center gap-8">
-
-        {/* 1.3s Headline & Badge Group */}
-        <div className="text-center space-y-4 max-w-3xl z-30">
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1.2 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10141B]/95 border border-white/15 text-[0.72rem] font-mono text-[#4DA3FF] shadow-2xl backdrop-blur-md"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#00BFA6] animate-ping" />
-            <span className="text-[#8993A3]">Autonomous Financial Infrastructure ·</span>
-            <span className="font-bold text-[#F5F7FA]">AI Reconciliation Core v1.0</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 1.3 }}
-            className="text-4xl sm:text-6xl font-extrabold tracking-tight text-[#F5F7FA] leading-[1.1] font-sans"
-          >
-            Autonomous Financial Infrastructure for{' '}
-            <span className="bg-gradient-to-r from-[#4DA3FF] to-[#60CFFF] bg-clip-text text-transparent">
-              Real-Time Reconciliation
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 1.4 }}
-            className="text-sm sm:text-base text-[#8993A3] leading-relaxed max-w-2xl mx-auto"
-          >
-            Multi-tier deterministic matching, AI-powered exception resolution, and instant audit trail generation across heterogeneous ledger data streams.
-          </motion.p>
-
-          {/* 1.5s Action CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 1.5 }}
-            className="pt-2 flex flex-wrap items-center justify-center gap-4"
-          >
-            <motion.button
-              onClick={scrollToApp}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="px-6 py-3.5 rounded-xl text-white font-semibold text-xs tracking-wide cursor-pointer flex items-center gap-2 transition-all relative overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, #5BADFF 0%, #2F80FF 50%, #1A6AE8 100%)',
-                boxShadow: '0 0 0 1px rgba(77,163,255,0.35), 0 4px 24px rgba(47,128,255,0.45), 0 1px 0 rgba(255,255,255,0.15) inset',
-              }}
-            >
-              <Cpu size={16} />
-              <span>Launch Reconciliation Engine</span>
-              <span className="text-blue-200">→</span>
-            </motion.button>
-
-            <motion.button
-              onClick={scrollToArchitecture}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="px-6 py-3.5 rounded-xl text-[#F5F7FA] font-semibold text-xs tracking-wide cursor-pointer flex items-center gap-2 transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 24px rgba(0,0,0,0.3)',
-              }}
-            >
-              <Layers size={15} className="text-[#8993A3]" />
-              <span>Explore Architecture</span>
-            </motion.button>
-          </motion.div>
-        </div>
-
-        {/* 0.4s - 1.1s 3D WebGL Core Container with Overlaid Floating HUD */}
+    <div className="w-full flex flex-col">
+      {/* ─── SECTION 1: SPLINE HERO ─── */}
+      <div className="relative w-full min-h-screen bg-transparent text-[#F5F7FA] overflow-hidden flex flex-col justify-between">
+        
+        {/* Dynamic Background Spline */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.4 }}
-          className="relative w-full max-w-5xl my-2"
+          ref={splineContainerRef}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 0.55, scale: 1 }}
+          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-0 pointer-events-auto"
         >
-          {/* Ambient glow that grounds the canvas in the scene */}
-          <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-b from-[#2F80FF]/10 via-[#00BFA6]/6 to-transparent blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-6 left-1/4 right-1/4 h-12 bg-[#2F80FF]/20 blur-2xl rounded-full pointer-events-none" />
-
-          <div className="relative h-[460px] sm:h-[520px] rounded-3xl border border-[#2F80FF]/20 fintech-glass-panel overflow-hidden shadow-[0_0_60px_rgba(47,128,255,0.08),0_32px_64px_rgba(0,0,0,0.6)]">
-            {/* 1.1s Overlaid Live Glassmorphism HUD Panels */}
-            <FloatingHUD />
-
-            {/* 0.4s-0.9s WebGL 3D Canvas Assembly */}
-            <FinancialCore3D />
-          </div>
+          <Spline
+            scene="/scene.splinecode"
+            className="w-full h-full mix-blend-luminosity"
+            onLoad={() => {
+              // Wait 4.5 seconds for the Spline cards to completely finish their intro animation
+              setTimeout(() => setSplineLoaded(true), 4500)
+            }}
+          />
+          {/* Multi-layer darkening: corners, centre, and bottom fade */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(8,10,13,0.7)_100%)]" style={{ pointerEvents: 'none' }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080A0D]/40 via-transparent to-[#080A0D]" style={{ pointerEvents: 'none' }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-[#080A0D]/60" style={{ pointerEvents: 'none' }} />
         </motion.div>
 
-        {/* Institutional Spec Cards Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 1.6 }}
-          className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-3 gap-4 text-left z-30"
-        >
-          <div className="fintech-glass-panel p-4 rounded-xl border border-white/10 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#2F80FF]/15 border border-[#2F80FF]/30 flex items-center justify-center text-[#4DA3FF] shrink-0">
-              <Zap size={16} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#F5F7FA] font-mono">Sub-Second Processing</div>
-              <div className="text-[0.68rem] text-[#8993A3] mt-0.5">Parses 50k+ ledger records in sub-second memory execution.</div>
-            </div>
-          </div>
+        <AnimatePresence>
+          {splineLoaded && (
+            <>
+              {/* Top Header Navigation */}
+              <motion.div
+                key="header"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="relative z-50 pointer-events-auto"
+              >
+                <HeaderNav onLaunchClick={scrollToApp} />
+              </motion.div>
 
-          <div className="fintech-glass-panel p-4 rounded-xl border border-white/10 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] shrink-0">
-              <Cpu size={16} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#F5F7FA] font-mono">Claude AI Exception Engine</div>
-              <div className="text-[0.68rem] text-[#8993A3] mt-0.5">Autonomous natural language reasoning over fee & FX variances.</div>
-            </div>
-          </div>
+              {/* Hero Body Content */}
+              <motion.div 
+                key="body"
+                className="relative z-30 pt-12 pb-12 px-6 sm:px-12 max-w-5xl mx-auto w-full flex-1 flex flex-col justify-center items-center gap-8 pointer-events-none"
+              >
+                <div className="text-center space-y-6 max-w-3xl pointer-events-auto">
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: -12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10141B]/80 border border-white/[0.08] text-[0.75rem] font-medium text-[#4DA3FF] shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-xl"
+                  >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00BFA6] animate-pulse" />
+              <span className="text-[#8993A3] font-sans">Autonomous Financial Infrastructure <span className="opacity-50 mx-1">·</span></span>
+              <span className="font-semibold text-[#F5F7FA] font-sans tracking-wide">AI Reconciliation Core <span className="font-mono text-[0.65rem] text-[#4DA3FF] ml-1 bg-[#2F80FF]/15 px-1.5 py-0.5 rounded-md">v1.0</span></span>
+            </motion.div>
 
-          <div className="fintech-glass-panel p-4 rounded-xl border border-white/10 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#00BFA6]/15 border border-[#00BFA6]/30 flex items-center justify-center text-[#00BFA6] shrink-0">
-              <ShieldCheck size={16} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#F5F7FA] font-mono">SOX / Audit Compliant</div>
-              <div className="text-[0.68rem] text-[#8993A3] mt-0.5">Generates machine-readable JSONL ledgers & executive reports.</div>
-            </div>
-          </div>
-        </motion.div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.3 }}
+                    className="text-4xl sm:text-6xl sm:leading-[1.1] font-extrabold tracking-tight text-[#F5F7FA] leading-tight font-sans drop-shadow-2xl"
+                  >          Autonomous Financial Infrastructure for{' '}
+              <span className="bg-gradient-to-r from-[#4DA3FF] to-[#60CFFF] bg-clip-text text-transparent">
+                Real-Time Reconciliation
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.5 }}
+                    className="text-sm sm:text-base text-[#E2E8F0] leading-relaxed max-w-2xl mx-auto drop-shadow-md font-medium"
+                  >
+                    Multi-tier deterministic matching, AI-powered exception resolution, and instant audit trail generation across heterogeneous ledger data streams.
+                  </motion.p>
+
+                  {/* Action CTAs */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 0.7 }}
+                    className="pt-4 flex flex-wrap items-center justify-center gap-4"
+                  >
+                    <motion.button
+                      onClick={scrollToApp}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="px-6 py-3.5 rounded-xl text-white font-semibold text-xs tracking-wide cursor-pointer flex items-center gap-2 transition-all relative overflow-hidden"
+                      style={{
+                        background: '#2F80FF',
+                        boxShadow: '0 8px 32px rgba(47,128,255,0.25), inset 0 1px 1px rgba(255,255,255,0.2)',
+                        border: '1px solid rgba(77,163,255,0.4)',
+                      }}
+                    >
+                      <Cpu size={16} />
+                      <span>Launch Reconciliation Engine</span>
+                      <span className="text-blue-200">→</span>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={scrollToArchitecture}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="px-6 py-3.5 rounded-xl text-[#F5F7FA] font-semibold text-xs tracking-wide cursor-pointer flex items-center gap-2 transition-all backdrop-blur-md"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 24px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      <Layers size={15} className="text-[#A0ABC0]" />
+                      <span>Explore Architecture</span>
+                    </motion.button>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Bottom Scroll Indicator */}
+              <motion.div
+                key="scroll-indicator"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1.0, delay: 1.0 }}
+                className="relative z-30 pb-8 flex justify-center items-center pointer-events-auto"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('backend-display-section')
+                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="flex flex-col items-center gap-2 text-[0.65rem] font-mono text-[#A0ABC0] hover:text-[#F5F7FA] transition-colors cursor-pointer"
+                >
+                  <span>SCROLL TO LIVE ENGINE</span>
+                  <ArrowDown size={14} className="animate-bounce text-[#4DA3FF]" />
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Bottom Scroll Indicator */}
-      <div className="pb-6 flex justify-center items-center z-30">
-        <button
-          type="button"
-          onClick={scrollToApp}
-          className="flex flex-col items-center gap-1 text-[0.65rem] font-mono text-[#8993A3] hover:text-[#F5F7FA] transition-colors cursor-pointer"
-        >
-          <span>SCROLL TO CONTROLLER</span>
-          <ArrowDown size={14} className="animate-bounce text-[#4DA3FF]" />
-        </button>
-      </div>
+
     </div>
   )
 }

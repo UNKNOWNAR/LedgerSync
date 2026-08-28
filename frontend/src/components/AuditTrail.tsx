@@ -74,7 +74,7 @@ export default function AuditTrail({ data }: { data: ReconcileResponse }) {
                     <td className="px-4 py-3 font-mono text-zinc-400">{Math.round(m.rule_score * 100)}%</td>
                     <td className="px-4 py-3">
                       <span className={m.llm_available ? 'text-purple-400 font-medium' : 'text-zinc-400'}>
-                        {m.llm_available ? 'Claude 3.5' : 'Rule Engine'}
+                        {m.llm_available ? 'Neural LLM' : 'Rule Engine'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-zinc-400 max-w-xs truncate">

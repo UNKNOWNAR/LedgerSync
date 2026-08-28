@@ -10,6 +10,7 @@ import ConfigPanel from './components/ConfigPanel'
 import MetricCards from './components/MetricCards'
 import ResultsTabs from './components/ResultsTabs'
 import DownloadSection from './components/DownloadSection'
+import LiveEngineSection from './components/LiveEngineSection'
 import { useLenis } from './hooks/useLenis'
 
 export default function App() {
@@ -34,6 +35,11 @@ export default function App() {
       setError('Please select both Payment Gateway and Bank Statement CSV files before executing.')
       return
     }
+    
+    // Auto-scroll to the visualization engine at the bottom
+    const el = document.getElementById('backend-display-section')
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+    
     setError(null)
     setLoading(true)
     try {
@@ -53,11 +59,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full bg-[#080A0D] text-[#F5F7FA] font-sans relative selection:bg-[#2F80FF]/30">
-      {/* 1. Cinematic 3D WebGL Landing Hero Section */}
-      <CinematicHero onLaunchClick={scrollToApp} />
+      
+      {/* Global Ambient White Hue */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/[0.03] via-transparent to-transparent" />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_bottom,_var(--tw-gradient-stops))] from-white/[0.01] to-transparent" />
 
-      {/* 2. Core Architecture Pipeline Breakdown Section */}
-      <ArchitectureSection />
+      {/* Main Scrollable Content */}
+      <div className="relative z-10">
+        {/* 1. Cinematic 3D WebGL Landing Hero Section */}
+        <CinematicHero onLaunchClick={scrollToApp} />
+
+        {/* 2. Core Architecture Pipeline Breakdown Section */}
+        <ArchitectureSection />
 
       {/* 3. Main Reconciliation Application Section */}
       <section id="reconciler-app" className="py-16 px-6 sm:px-12 max-w-7xl mx-auto space-y-12">
@@ -155,20 +168,45 @@ export default function App() {
               ) : !loading ? (
                 <motion.div
                   key="empty-state"
-                  className="py-20 text-center rounded-2xl border border-white/[0.08] backdrop-blur-md flex flex-col items-center gap-5"
-                  style={{ background: 'linear-gradient(180deg, rgba(16,20,27,0.7) 0%, rgba(10,13,18,0.5) 100%)' }}
+                  className="rounded-2xl border border-white/[0.06] overflow-hidden"
+                  style={{ background: 'linear-gradient(180deg, rgba(16,20,27,0.8) 0%, rgba(8,10,13,0.6) 100%)' }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(47,128,255,0.08)', border: '1px solid rgba(47,128,255,0.18)', boxShadow: '0 0 32px rgba(47,128,255,0.08)' }}>
-                    <Play size={22} className="text-[#4DA3FF] ml-0.5" />
+                  {/* Top bar */}
+                  <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-[#2F80FF]/50 animate-pulse" />
+                      <span className="text-[0.65rem] font-mono text-[#4A5568] uppercase tracking-widest">Awaiting Ledger Input</span>
+                    </div>
+                    <span className="text-[0.6rem] font-mono text-[#2A3140] uppercase tracking-widest">0 records loaded</span>
                   </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-[#F5F7FA]">Ready to Reconcile</p>
-                    <p className="text-xs text-[#5A6474] max-w-xs mx-auto leading-relaxed">
-                      Upload both CSV ledgers and click <span className="text-[#8993A3] font-medium">Run Reconciliation Engine</span> to begin multi-tier matching.
-                    </p>
+
+                  {/* Fake shimmer rows */}
+                  <div className="px-5 py-4 space-y-2.5">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3 opacity-30" style={{ opacity: 0.15 + i * 0.05 }}>
+                        <div className="h-3 rounded-md bg-white/10" style={{ width: `${60 + (i * 17) % 40}px` }} />
+                        <div className="h-3 rounded-md bg-white/10 flex-1" />
+                        <div className="h-3 rounded-md bg-white/10 w-16" />
+                        <div className="h-3 rounded-md bg-white/10 w-20" />
+                        <div className="h-5 rounded-full bg-white/5 w-14" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA inside */}
+                  <div className="flex flex-col items-center gap-3 py-8 border-t border-white/[0.04]">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(47,128,255,0.08)', border: '1px solid rgba(47,128,255,0.15)' }}>
+                      <Play size={18} className="text-[#4DA3FF] ml-0.5" />
+                    </div>
+                    <div className="space-y-1 text-center">
+                      <p className="text-sm font-semibold text-[#F5F7FA]">Ready to Reconcile</p>
+                      <p className="text-xs text-[#4A5568] max-w-xs mx-auto leading-relaxed">
+                        Upload both CSV ledgers above, then hit <span className="text-[#4DA3FF] font-medium">Run Reconciliation Engine</span> to begin.
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -177,10 +215,27 @@ export default function App() {
         </div>
       </section>
 
+      {/* 4. Live Reconciliation Engine Visualization (Moved to bottom) */}
+      <LiveEngineSection data={data} />
+
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-white/10 text-center text-xs font-mono text-[#8D96A5]">
-        AI FINANCE CONTROLLER v1.0 · Institutional Financial Infrastructure · Powered by Claude AI Engine
+      <footer className="py-6 px-8 border-t border-white/[0.06] bg-[#080A0D]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-[#00BFA6] animate-pulse" />
+            <span className="text-[0.65rem] font-mono text-[#3A4454] uppercase tracking-widest">All Systems Operational</span>
+          </div>
+          <span className="text-[0.65rem] font-mono text-[#2A3140] uppercase tracking-widest">
+            AI Finance Controller v1.0 &nbsp;·&nbsp; Powered by Autonomous LLM Engine
+          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-[0.65rem] font-mono text-[#2A3140]">SOX Compliant</span>
+            <span className="text-[0.65rem] font-mono text-[#2A3140]">AES-256</span>
+            <span className="text-[0.65rem] font-mono text-[#2A3140]">ISO 27001</span>
+          </div>
+        </div>
       </footer>
+      </div>
     </div>
   )
 }

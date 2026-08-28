@@ -1,20 +1,26 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Html, Sparkles, MeshWobbleMaterial } from '@react-three/drei'
+import { Html, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
+import type { ReconcileResponse, MatchResult } from '../types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CYCLE = 6.5   // seconds per full lane cycle
 const START_X = 7.0 // home x position for each side
 
 // ─── Lane definitions ────────────────────────────────────────────────────────
-const LANES = [
-  { y:  2.6, gwAmt: '$1,240.00', bkAmt: '$1,240.00', matched: true,  gwLabel: 'STRIPE_API',  bkLabel: 'HSBC_7A2F', phaseOffset: 0.00 },
-  { y:  1.2, gwAmt: '$842.50',   bkAmt: '$842.50',   matched: true,  gwLabel: 'PAYPAL_MX',   bkLabel: 'CITI_3D9C', phaseOffset: 0.18 },
-  { y: -0.1, gwAmt: '$3,180.00', bkAmt: '$3,180.00', matched: true,  gwLabel: 'ADYEN_EU',    bkLabel: 'BARO_8E1B', phaseOffset: 0.36 },
-  { y: -1.4, gwAmt: '$95.00',    bkAmt: '$97.50',    matched: false, gwLabel: 'SQUARE_US',   bkLabel: 'WELLS_2FA', phaseOffset: 0.54 },
-  { y: -2.8, gwAmt: '$2,050.00', bkAmt: '$2,050.00', matched: true,  gwLabel: 'BRAINTREE',   bkLabel: 'JPMC_5C8D', phaseOffset: 0.72 },
+const DEFAULT_LANES = [
+  { y:  2.0, gwAmt: '$1,240.00', bkAmt: '$1,240.00', matched: true,  gwLabel: 'STRIPE_API',  bkLabel: 'HSBC_7A2F', phaseOffset: 0.00 },
+  { y:  1.0, gwAmt: '$842.50',   bkAmt: '$842.50',   matched: true,  gwLabel: 'PAYPAL_MX',   bkLabel: 'CITI_3D9C', phaseOffset: 0.18 },
+  { y:  0.0, gwAmt: '$3,180.00', bkAmt: '$3,180.00', matched: true,  gwLabel: 'ADYEN_EU',    bkLabel: 'BARO_8E1B', phaseOffset: 0.36 },
+  { y: -1.0, gwAmt: '$95.00',    bkAmt: '$97.50',    matched: false, gwLabel: 'SQUARE_US',   bkLabel: 'WELLS_2FA', phaseOffset: 0.54 },
+  { y: -2.0, gwAmt: '$2,050.00', bkAmt: '$2,050.00', matched: true,  gwLabel: 'BRAINTREE',   bkLabel: 'JPMC_5C8D', phaseOffset: 0.72 },
 ]
+
+function formatCurrency(num?: number) {
+  if (num === undefined || num === null) return '$0.00'
+  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 // ─── Easing ──────────────────────────────────────────────────────────────────
 function easeInOut3(t: number) {
@@ -27,7 +33,7 @@ function easeOut3(t: number) {
 // ─── 1. Refined Lane component with Translucent Glass Chips & Optical Nodes ────
 function LanePair({
   y, gwAmt, bkAmt, matched, gwLabel, bkLabel, phaseOffset,
-}: typeof LANES[0]) {
+}: typeof DEFAULT_LANES[0]) {
   const gwRef    = useRef<THREE.Group>(null)
   const bkRef    = useRef<THREE.Group>(null)
   const gwMat    = useRef<THREE.MeshBasicMaterial>(null)
@@ -123,46 +129,48 @@ function LanePair({
 
   // Translucent edge-lit HUD data chips styling
   const gwStyle: React.CSSProperties = {
-    transform: 'translateX(calc(-100% - 14px))',
-    padding: '4px 10px',
-    borderRadius: 8,
-    background: 'rgba(10, 14, 22, 0.78)',
-    border: `1px solid ${matched ? 'rgba(77, 163, 255, 0.28)' : 'rgba(245, 158, 11, 0.28)'}`,
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-    fontSize: '0.6rem',
-    fontFamily: 'JetBrains Mono, monospace',
+    transform: 'translateX(calc(-100% - 16px))',
+    padding: '5px 12px',
+    borderRadius: '24px',
+    background: 'rgba(12, 16, 24, 0.65)',
+    border: `1px solid ${matched ? 'rgba(77, 163, 255, 0.15)' : 'rgba(245, 158, 11, 0.15)'}`,
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+    fontSize: '0.65rem',
+    fontFamily: 'Inter, sans-serif',
     color: matched ? '#4DA3FF' : '#F59E0B',
     whiteSpace: 'nowrap',
     pointerEvents: 'none',
     textAlign: 'right',
-    lineHeight: 1.35,
+    lineHeight: 1.3,
   }
 
   const bkStyle: React.CSSProperties = {
-    transform: 'translateX(14px)',
-    padding: '4px 10px',
-    borderRadius: 8,
-    background: 'rgba(10, 14, 22, 0.78)',
-    border: `1px solid ${matched ? 'rgba(0, 191, 166, 0.28)' : 'rgba(239, 68, 68, 0.28)'}`,
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-    fontSize: '0.6rem',
-    fontFamily: 'JetBrains Mono, monospace',
+    transform: 'translateX(16px)',
+    padding: '5px 12px',
+    borderRadius: '24px',
+    background: 'rgba(12, 16, 24, 0.65)',
+    border: `1px solid ${matched ? 'rgba(0, 191, 166, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`,
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+    fontSize: '0.65rem',
+    fontFamily: 'Inter, sans-serif',
     color: matched ? '#00BFA6' : '#EF4444',
     whiteSpace: 'nowrap',
     pointerEvents: 'none',
-    lineHeight: 1.35,
+    lineHeight: 1.3,
   }
 
   const subStyle: React.CSSProperties = {
-    fontSize: '0.48rem',
-    opacity: 0.55,
-    letterSpacing: '0.08em',
-    marginBottom: 2,
+    fontSize: '0.45rem',
+    fontFamily: 'JetBrains Mono, monospace',
+    opacity: 0.7,
+    letterSpacing: '0.12em',
+    marginBottom: '2px',
     fontWeight: 600,
+    textTransform: 'uppercase',
   }
 
   return (
@@ -240,16 +248,17 @@ function MatchingEngine() {
   })
 
   const headerStyle = (color: string, align?: 'left' | 'right' | 'center'): React.CSSProperties => ({
-    fontSize: '0.52rem',
-    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '0.6rem',
+    fontFamily: 'Inter, sans-serif',
     color,
-    letterSpacing: '0.14em',
+    letterSpacing: '0.25em',
     textTransform: 'uppercase',
-    opacity: 0.65,
+    opacity: 0.85,
     pointerEvents: 'none',
     whiteSpace: 'nowrap',
     textAlign: align ?? 'center',
-    fontWeight: 700,
+    fontWeight: 600,
+    textShadow: '0 2px 10px rgba(0,0,0,0.8)',
   })
 
   return (
@@ -261,7 +270,7 @@ function MatchingEngine() {
       </mesh>
 
       {/* Ticks at lane heights */}
-      {LANES.map((lane, i) => (
+      {DEFAULT_LANES.map((lane, i) => (
         <mesh key={i} position={[0, lane.y, 0]}>
           <boxGeometry args={[0.26, 0.006, 0.006]} />
           <meshBasicMaterial color="#2F80FF" transparent opacity={0.28} blending={THREE.AdditiveBlending} depthWrite={false} />
@@ -286,14 +295,16 @@ function MatchingEngine() {
       {/* Inner Glowing AI Core Sphere */}
       <mesh ref={coreRef}>
         <sphereGeometry args={[0.22, 32, 32]} />
-        <MeshWobbleMaterial
+        <meshPhysicalMaterial
           color="#2F80FF"
-          emissive="#00BFA6"
-          emissiveIntensity={1.2}
-          factor={0.4}
-          speed={2.0}
-          roughness={0.1}
-          metalness={0.8}
+          emissive="#4DA3FF"
+          emissiveIntensity={0.8}
+          roughness={0.15}
+          metalness={0.9}
+          transmission={0.9}
+          thickness={0.5}
+          ior={1.4}
+          clearcoat={1.0}
         />
       </mesh>
 
@@ -317,13 +328,13 @@ function MatchingEngine() {
       </mesh>
 
       {/* Column headers */}
-      <Html position={[-START_X, 3.65, 0]} center>
+      <Html position={[-START_X, 3.1, 0]} center>
         <div style={headerStyle('#4DA3FF')}>Payment Gateway</div>
       </Html>
-      <Html position={[0, 3.65, 0]} center>
+      <Html position={[0, 3.1, 0]} center>
         <div style={{ ...headerStyle('#60CFFF'), opacity: 0.8 }}>AI Engine</div>
       </Html>
-      <Html position={[START_X, 3.65, 0]} center>
+      <Html position={[START_X, 3.1, 0]} center>
         <div style={headerStyle('#00BFA6')}>Bank Statement</div>
       </Html>
     </group>
@@ -331,8 +342,47 @@ function MatchingEngine() {
 }
 
 // ─── 3. Studio Lighting & Mouse Parallax Scene ─────────────────────────────────
-function SceneContent() {
+function SceneContent({ data }: { data?: ReconcileResponse | null }) {
   const groupRef = useRef<THREE.Group>(null)
+  
+  // Real data queue logic
+  const [activeLanes, setActiveLanes] = useState(DEFAULT_LANES)
+  const queueRef = useRef<MatchResult[]>([])
+
+  useEffect(() => {
+    if (data) {
+      // Build a fresh queue mixing exact, partial, and exceptions
+      queueRef.current = [...data.matched, ...data.partial_matches, ...data.exceptions]
+    }
+  }, [data])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (queueRef.current.length > 0) {
+        // Pop 5 items from the front
+        const batch = queueRef.current.splice(0, 5)
+        // Push them to the back so it loops infinitely
+        queueRef.current.push(...batch)
+
+        setActiveLanes((prev) =>
+          prev.map((lane, i) => {
+            const row = batch[i]
+            if (!row) return lane // If fewer than 5 items, fallback to current lane
+            
+            return {
+              ...lane,
+              gwAmt: formatCurrency(row.gateway_tx?.amount),
+              bkAmt: formatCurrency(row.bank_tx?.amount),
+              matched: row.status !== 'exception',
+              gwLabel: row.gateway_tx?.merchant_name.substring(0, 12).toUpperCase() || 'UNKNOWN',
+              bkLabel: row.bank_tx?.merchant_name.substring(0, 12).toUpperCase() || 'UNKNOWN',
+            }
+          })
+        )
+      }
+    }, CYCLE * 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   useFrame((state) => {
     if (!groupRef.current) return
@@ -358,7 +408,7 @@ function SceneContent() {
       <pointLight position={[0, 0, 7]} intensity={0.5} color="#ffffff" />
 
       <MatchingEngine />
-      {LANES.map((lane, i) => <LanePair key={i} {...lane} />)}
+      {activeLanes.map((lane, i) => <LanePair key={i} {...lane} />)}
 
       <Sparkles
         count={140}
@@ -373,14 +423,14 @@ function SceneContent() {
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-export default function FinancialCore3D() {
+export default function FinancialCore3D({ data }: { data?: ReconcileResponse | null }) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas
-        camera={{ position: [0, 0, 13], fov: 48 }}
+        camera={{ position: [0, 0, 16.5], fov: 48 }}
         gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
       >
-        <SceneContent />
+        <SceneContent data={data} />
       </Canvas>
     </div>
   )
