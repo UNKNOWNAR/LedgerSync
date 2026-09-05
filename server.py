@@ -18,7 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from reconciler.models import ReconciliationConfig
-from reconciler.pipeline import run_pipeline
+from worker import reconcile_job, celery_app
+from celery.result import AsyncResult
 from reconciler.reporting import generate_summary_metrics, write_all_reports
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +30,7 @@ app = FastAPI(title="Transaction Reconciliation API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -56,46 +58,55 @@ async def reconcile(
         llm_enabled=cfg_data.get("llm_enabled", False),
     )
 
-    tmp = Path(tempfile.mkdtemp())
+    tmp = Path("data/uploads") / uuid.uuid4().hex[:8]
+    tmp.mkdir(parents=True, exist_ok=True)
     gw_path = tmp / "payment_gateway.csv"
     bank_path = tmp / "bank_settlement.csv"
     gw_path.write_bytes(await gateway_file.read())
     bank_path.write_bytes(await bank_file.read())
 
-    try:
-        result = run_pipeline(gw_path, bank_path, recon_config)
-    except ValueError as exc:
-        return JSONResponse(status_code=400, content={"error": str(exc)})
-    except Exception as exc:
-        logger.exception("Pipeline error")
-        return JSONResponse(status_code=500, content={"error": str(exc)})
-
     out_dir = tmp / "outputs"
-    report_paths = write_all_reports(result, out_dir)
-    metrics = generate_summary_metrics(result)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Dispatch to Celery
+    import dataclasses
+    task = reconcile_job.delay(str(gw_path), str(bank_path), dataclasses.asdict(recon_config), str(out_dir))
+    
+    return {"task_id": task.id}
 
-    run_id = uuid.uuid4().hex[:12]
-    _runs[run_id] = report_paths
+@app.get("/api/task/{task_id}")
+def get_task_status(task_id: str):
+    task = AsyncResult(task_id, app=celery_app)
+    if task.state == "PENDING":
+        return {"state": task.state, "status": "Pending..."}
+    elif task.state != "FAILURE":
+        response = {
+            "state": task.state,
+            "status": task.info.get("status", "") if isinstance(task.info, dict) else str(task.info)
+        }
+        if task.state == "SUCCESS":
+            result = task.result
+            _runs[task_id] = {k: Path(v) for k, v in result.get("report_paths", {}).items()}
+            response["result"] = result
+        return response
+    else:
+        return {"state": task.state, "status": str(task.info)}
 
-    def _serialize_matches(matches: list) -> list[dict[str, Any]]:
-        rows = []
-        for m in matches:
-            rows.append(m.to_dict())
-        return rows
-
-    return {
-        "run_id": run_id,
-        "metrics": metrics,
-        "matched": _serialize_matches(result.matched),
-        "partial_matches": _serialize_matches(result.partial_matches),
-        "exceptions": _serialize_matches(result.exceptions),
-        "ingestion_errors": [e.to_dict() for e in result.ingestion_errors],
-    }
 
 
 @app.get("/api/reports/{run_id}/{report_name}")
 def download_report(run_id: str, report_name: str):
     report_paths = _runs.get(run_id)
+
+    # Fallback: if this server instance restarted and lost _runs, reconstruct
+    # the paths from the Celery result (the worker already computed them).
+    if not report_paths:
+        task = AsyncResult(run_id, app=celery_app)
+        if task.state == "SUCCESS" and isinstance(task.result, dict):
+            raw_paths = task.result.get("report_paths", {})
+            report_paths = {k: Path(v) for k, v in raw_paths.items()}
+            _runs[run_id] = report_paths  # cache for future calls
+
     if not report_paths:
         return JSONResponse(status_code=404, content={"error": "Run not found"})
 

@@ -115,13 +115,12 @@ def run_pipeline(
         llm = reason_match(pair, config)
         match_result = _candidate_to_match_result(pair, llm)
 
-        if match_result.status in (MatchStatus.FUZZY_LLM, MatchStatus.FUZZY_RULE):
-            if llm.decision == "match":
-                result.matched.append(match_result)
-            else:
-                result.partial_matches.append(match_result)
-        else:
+        if match_result.status == MatchStatus.EXCEPTION:
             result.exceptions.append(match_result)
+        elif llm.decision == "match":
+            result.matched.append(match_result)
+        else:
+            result.partial_matches.append(match_result)
 
         claimed_gw_ids.add(pair.gateway_tx.transaction_id)
         claimed_bank_ids.add(pair.bank_tx.transaction_id)

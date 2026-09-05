@@ -342,7 +342,7 @@ function MatchingEngine() {
 }
 
 // ─── 3. Studio Lighting & Mouse Parallax Scene ─────────────────────────────────
-function SceneContent({ data }: { data?: ReconcileResponse | null }) {
+function SceneContent({ data, isProcessing }: { data?: ReconcileResponse | null, isProcessing?: boolean }) {
   const groupRef = useRef<THREE.Group>(null)
   
   // Real data queue logic
@@ -350,39 +350,66 @@ function SceneContent({ data }: { data?: ReconcileResponse | null }) {
   const queueRef = useRef<MatchResult[]>([])
 
   useEffect(() => {
+    // Fill or reset the queue
     if (data) {
-      // Build a fresh queue mixing exact, partial, and exceptions
       queueRef.current = [...data.matched, ...data.partial_matches, ...data.exceptions]
-    }
-  }, [data])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (queueRef.current.length > 0) {
-        // Pop 5 items from the front
-        const batch = queueRef.current.splice(0, 5)
-        // Push them to the back so it loops infinitely
-        queueRef.current.push(...batch)
-
-        setActiveLanes((prev) =>
-          prev.map((lane, i) => {
-            const row = batch[i]
-            if (!row) return lane // If fewer than 5 items, fallback to current lane
-            
-            return {
-              ...lane,
-              gwAmt: formatCurrency(row.gateway_tx?.amount),
-              bkAmt: formatCurrency(row.bank_tx?.amount),
-              matched: row.status !== 'exception',
-              gwLabel: row.gateway_tx?.merchant_name.substring(0, 12).toUpperCase() || 'UNKNOWN',
-              bkLabel: row.bank_tx?.merchant_name.substring(0, 12).toUpperCase() || 'UNKNOWN',
-            }
-          })
-        )
+    } else if (isProcessing) {
+      const dummyQueue: any[] = []
+      for (let i = 0; i < 20; i++) {
+        dummyQueue.push({
+          status: 'exact',
+          gateway_tx: { amount: Math.random() * 5000 + 200, merchant_name: 'ANALYZING...' },
+          bank_tx:    { amount: Math.random() * 5000 + 200, merchant_name: 'SCANNING...'  },
+        })
       }
-    }, CYCLE * 1000)
-    return () => clearInterval(interval)
-  }, [])
+      queueRef.current = dummyQueue
+      // Seed the lanes immediately so something appears right away
+      setActiveLanes(DEFAULT_LANES.map((lane, i) => ({
+        ...lane,
+        gwAmt: formatCurrency(dummyQueue[i]?.gateway_tx?.amount),
+        bkAmt: formatCurrency(dummyQueue[i]?.bank_tx?.amount),
+        matched: true,
+        gwLabel: 'ANALYZING...',
+        bkLabel: 'SCANNING...',
+      })))
+    } else {
+      // Idle: no data, not processing — show nothing until user uploads CSVs
+      queueRef.current = []
+      setActiveLanes([])
+    }
+
+    // Only animate if there's something to show
+    if (queueRef.current.length === 0) return
+
+    // Drain the queue once — stop when empty, reset to idle
+    const intervalRef = { id: 0 }
+    intervalRef.id = window.setInterval(() => {
+      if (queueRef.current.length === 0) {
+        // All records shown — clear interval and reset lanes back to idle default
+        window.clearInterval(intervalRef.id)
+        setActiveLanes(DEFAULT_LANES)
+        return
+      }
+      const batch = queueRef.current.splice(0, 5)
+
+      setActiveLanes(prev =>
+        prev.map((lane, i) => {
+          const row = batch[i]
+          if (!row) return lane
+          return {
+            ...lane,
+            gwAmt:   formatCurrency(row.gateway_tx?.amount),
+            bkAmt:   formatCurrency(row.bank_tx?.amount),
+            matched: row.status !== 'exception',
+            gwLabel: (row.gateway_tx?.merchant_name ?? 'UNKNOWN').substring(0, 12).toUpperCase(),
+            bkLabel: (row.bank_tx?.merchant_name   ?? 'UNKNOWN').substring(0, 12).toUpperCase(),
+          }
+        })
+      )
+    }, 1500)
+
+    return () => window.clearInterval(intervalRef.id)
+  }, [data, isProcessing])
 
   useFrame((state) => {
     if (!groupRef.current) return
@@ -423,14 +450,14 @@ function SceneContent({ data }: { data?: ReconcileResponse | null }) {
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-export default function FinancialCore3D({ data }: { data?: ReconcileResponse | null }) {
+export default function FinancialCore3D({ data, isProcessing }: { data?: ReconcileResponse | null, isProcessing?: boolean }) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas
         camera={{ position: [0, 0, 16.5], fov: 48 }}
         gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
       >
-        <SceneContent data={data} />
+        <SceneContent data={data} isProcessing={isProcessing} />
       </Canvas>
     </div>
   )

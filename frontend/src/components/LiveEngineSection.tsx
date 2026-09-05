@@ -4,7 +4,7 @@ import FinancialCore3D from './FinancialCore3D'
 import FloatingHUD from './FloatingHUD'
 import type { ReconcileResponse } from '../types'
 
-export default function LiveEngineSection({ data }: { data?: ReconcileResponse | null }) {
+export default function LiveEngineSection({ data, isProcessing }: { data?: ReconcileResponse | null, isProcessing?: boolean }) {
   return (
     <div id="backend-display-section" className="relative w-full py-24 bg-[#080A0D] border-t border-white/5 flex flex-col items-center px-6 overflow-hidden">
         
@@ -43,9 +43,31 @@ export default function LiveEngineSection({ data }: { data?: ReconcileResponse |
         <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-b from-[#2F80FF]/10 via-[#00BFA6]/6 to-transparent blur-2xl pointer-events-none" />
         <div className="absolute -bottom-6 left-1/4 right-1/4 h-12 bg-[#2F80FF]/15 blur-2xl rounded-full pointer-events-none" />
 
-        <div className="relative h-[550px] sm:h-[700px] rounded-3xl border border-[#2F80FF]/20 fintech-glass-panel overflow-hidden shadow-[0_0_60px_rgba(47,128,255,0.08),0_32px_64px_rgba(0,0,0,0.6)]">
-          <FloatingHUD />
-          <FinancialCore3D data={data} />
+        <div className="relative h-[550px] sm:h-[700px] rounded-3xl overflow-hidden">
+          {/* Always-mounted Canvas — never unmount to avoid WebGL context loss */}
+          <div
+            className="absolute inset-0 rounded-3xl border border-[#2F80FF]/20 fintech-glass-panel shadow-[0_0_60px_rgba(47,128,255,0.08),0_32px_64px_rgba(0,0,0,0.6)] transition-opacity duration-500"
+            style={{ opacity: (isProcessing || data) ? 1 : 0, pointerEvents: (isProcessing || data) ? 'auto' : 'none' }}
+          >
+            <FloatingHUD data={data} />
+            <FinancialCore3D data={data} isProcessing={isProcessing} />
+          </div>
+
+          {/* Standby overlay — shown when idle, fades out when engine runs */}
+          <div
+            className="absolute inset-0 rounded-3xl border border-white/[0.04] bg-[#080A0D]/60 flex flex-col items-center justify-center gap-4 transition-opacity duration-500 pointer-events-none"
+            style={{ opacity: (isProcessing || data) ? 0 : 1 }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[#2F80FF]/8 border border-[#2F80FF]/15 flex items-center justify-center">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2F80FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </div>
+            <p className="text-[#3A4454] text-sm font-mono tracking-widest uppercase">Engine Standby</p>
+            <p className="text-[#2A3040] text-xs">Upload CSVs and run the engine to begin</p>
+          </div>
         </div>
       </motion.div>
 

@@ -168,7 +168,7 @@ class ReconciliationConfig:
 
     # LLM settings
     llm_enabled: bool = True
-    llm_model: str = "claude-haiku-4-5"
+    llm_model: str = "llama3-70b-8192"
     llm_max_retries: int = 3
 
     # Output directory

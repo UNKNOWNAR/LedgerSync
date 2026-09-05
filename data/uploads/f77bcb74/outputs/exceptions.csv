@@ -1,0 +1,8 @@
+gw_transaction_id,gw_amount,gw_date,gw_merchant_name,gw_reference_number,bank_transaction_id,bank_amount,bank_date,bank_merchant_name,bank_reference_number,status,confidence,rule_score,llm_available,reason,llm_reasoning
+GW00077,330.12,2026-02-14,IRCTC Rail,PAY727065173961,,,,,,exception,0.0,0.0,True,No matching record found in bank file.,
+GW00076,5715.14,2026-04-12,Goibibo Hotels,NEFT741038689082,,,,,,exception,0.0,0.0,True,No matching record found in bank file.,
+GW00075,33030.37,2026-05-27,BookMyShow,NEFT713758808009,,,,,,exception,0.0,0.0,True,No matching record found in bank file.,
+GW00074,394.98,2026-01-02,Policy Bazaar,PAY426460350321,,,,,,exception,0.0,0.0,True,No matching record found in bank file.,
+,,,,,BK00079,13611.86,2026-06-02,Kalyan Jewellers,TXN446753040326,exception,0.0,0.0,True,No matching record found in gateway file.,
+,,,,,BK00080,8535.56,2026-07-02,PVR Cinemas,IMPS359709516594,exception,0.0,0.0,True,No matching record found in gateway file.,
+,,,,,BK00078,972.9,2026-03-22,Manyavar,IMPS170964556869,exception,0.0,0.0,True,No matching record found in gateway file.,

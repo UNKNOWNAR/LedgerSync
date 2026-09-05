@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Play, AlertCircle, Cpu, Settings2 } from 'lucide-react'
 import type { ReconcileConfig, ReconcileResponse } from './types'
-import { reconcile } from './api'
+import { startReconciliation, pollTaskStatus } from './api'
 import CinematicHero from './components/CinematicHero'
 import ArchitectureSection from './components/ArchitectureSection'
 import FileUpload from './components/FileUpload'
@@ -30,25 +30,45 @@ export default function App() {
 
   useLenis()
 
+  const [pollingStatus, setPollingStatus] = useState<string | null>(null)
+
   const handleRun = useCallback(async () => {
     if (!gatewayFile || !bankFile) {
       setError('Please select both Payment Gateway and Bank Statement CSV files before executing.')
       return
     }
     
-    // Auto-scroll to the visualization engine at the bottom
     const el = document.getElementById('backend-display-section')
     if (el) el.scrollIntoView({ behavior: 'smooth' })
     
     setError(null)
+    setData(null)
     setLoading(true)
+    setPollingStatus("Dispatching to Celery worker...")
+    
     try {
-      const result = await reconcile(gatewayFile, bankFile, config)
-      setData(result)
+      const { task_id } = await startReconciliation(gatewayFile, bankFile, config)
+      
+      const poll = async () => {
+        const status = await pollTaskStatus(task_id)
+        setPollingStatus(status.status)
+        
+        if (status.state === "SUCCESS" && status.result) {
+          setData(status.result)
+          setLoading(false)
+          setPollingStatus(null)
+        } else if (status.state === "FAILURE") {
+          throw new Error(status.status || "Celery task failed")
+        } else {
+          setTimeout(poll, 1000)
+        }
+      }
+      
+      poll()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Execution failed')
-    } finally {
       setLoading(false)
+      setPollingStatus(null)
     }
   }, [gatewayFile, bankFile, config])
 
@@ -133,7 +153,7 @@ export default function App() {
                 ) : (
                   <Play size={16} fill="currentColor" />
                 )}
-                <span>{loading ? 'Processing Reconciliation Pipelines...' : 'Run Reconciliation Engine'}</span>
+                <span>{loading ? (pollingStatus || 'Processing...') : 'Run Reconciliation Engine'}</span>
               </motion.button>
 
               <AnimatePresence>
@@ -216,7 +236,7 @@ export default function App() {
       </section>
 
       {/* 4. Live Reconciliation Engine Visualization (Moved to bottom) */}
-      <LiveEngineSection data={data} />
+      <LiveEngineSection data={data} isProcessing={loading} />
 
       {/* Footer */}
       <footer className="py-6 px-8 border-t border-white/[0.06] bg-[#080A0D]">
@@ -226,7 +246,7 @@ export default function App() {
             <span className="text-[0.65rem] font-mono text-[#3A4454] uppercase tracking-widest">All Systems Operational</span>
           </div>
           <span className="text-[0.65rem] font-mono text-[#2A3140] uppercase tracking-widest">
-            AI Finance Controller v1.0 &nbsp;·&nbsp; Powered by Autonomous LLM Engine
+            LedgerSync v1.0 &nbsp;·&nbsp; Powered by Autonomous LLM Engine
           </span>
           <div className="flex items-center gap-4">
             <span className="text-[0.65rem] font-mono text-[#2A3140]">SOX Compliant</span>

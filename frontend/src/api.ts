@@ -1,25 +1,31 @@
-import type { ReconcileConfig, ReconcileResponse } from './types'
+import type { ReconcileConfig, ReconcileResponse } from "./types"
 
-export async function reconcile(
+export async function startReconciliation(
   gatewayFile: File,
   bankFile: File,
   config: ReconcileConfig,
-): Promise<ReconcileResponse> {
+): Promise<{ task_id: string }> {
   const form = new FormData()
-  form.append('gateway_file', gatewayFile)
-  form.append('bank_file', bankFile)
-  form.append('config', JSON.stringify(config))
+  form.append("gateway_file", gatewayFile)
+  form.append("bank_file", bankFile)
+  form.append("config", JSON.stringify(config))
 
-  const res = await fetch('/api/reconcile', {
-    method: 'POST',
+  const res = await fetch("/api/reconcile", {
+    method: "POST",
     body: form,
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+    const err = await res.json().catch(() => ({ error: "Unknown error" }))
     throw new Error(err.error || `HTTP ${res.status}`)
   }
 
+  return res.json()
+}
+
+export async function pollTaskStatus(taskId: string): Promise<{ state: string, status: string, result?: ReconcileResponse }> {
+  const res = await fetch(`/api/task/${taskId}`)
+  if (!res.ok) throw new Error("Failed to fetch task status")
   return res.json()
 }
 

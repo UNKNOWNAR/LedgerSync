@@ -752,12 +752,12 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section">LLM Reasoning<span class="sidebar-section-line"></span></div>', unsafe_allow_html=True)
     llm_enabled = st.toggle(
-        "Enable LLM reasoning (Claude)",
-        value=bool(os.environ.get("ANTHROPIC_API_KEY")),
-        help="Requires ANTHROPIC_API_KEY environment variable.",
+        "Enable LLM reasoning (Groq / llama3)",
+        value=bool(os.environ.get("GROQ_API_KEY")),
+        help="Requires GROQ_API_KEY environment variable.",
     )
-    if llm_enabled and not os.environ.get("ANTHROPIC_API_KEY"):
-        st.warning("ANTHROPIC_API_KEY not set. LLM will fall back to rule-based scoring.")
+    if llm_enabled and not os.environ.get("GROQ_API_KEY"):
+        st.warning("GROQ_API_KEY not set. LLM will fall back to rule-based scoring.")
 
     st.markdown('<div class="gradient-divider"></div>', unsafe_allow_html=True)
     st.markdown(
@@ -833,34 +833,43 @@ if run_clicked:
         llm_enabled=llm_enabled,
     )
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp = Path(tmpdir)
-        gw_path = tmp / "payment_gateway.csv"
-        bank_path = tmp / "bank_settlement.csv"
-        gw_path.write_bytes(gw_file.read())
-        bank_path.write_bytes(bank_file.read())
+    # Use a persistent temp dir stored in session_state so that
+    # report files survive after this script re-run (downloads need them).
+    # Clean up any previous run's temp dir first.
+    import shutil
+    prev_tmp = st.session_state.pop("_tmp_dir", None)
+    if prev_tmp and Path(prev_tmp).exists():
+        shutil.rmtree(prev_tmp, ignore_errors=True)
 
-        with st.spinner("Running reconciliation pipeline..."):
-            try:
-                result = run_pipeline(gw_path, bank_path, config)
-                out_dir = tmp / "outputs"
-                report_paths = write_all_reports(result, out_dir)
-                metrics = generate_summary_metrics(result)
+    tmp = Path(tempfile.mkdtemp())
+    st.session_state["_tmp_dir"] = str(tmp)
 
-                st.session_state["result"] = result
-                st.session_state["metrics"] = metrics
-                st.session_state["report_paths"] = report_paths
-                if "approvals" not in st.session_state:
-                    st.session_state["approvals"] = {}
+    gw_path = tmp / "payment_gateway.csv"
+    bank_path = tmp / "bank_settlement.csv"
+    gw_path.write_bytes(gw_file.read())
+    bank_path.write_bytes(bank_file.read())
 
-                st.success("Reconciliation complete!")
-            except ValueError as exc:
-                st.error(f"Configuration error: {exc}")
-                st.stop()
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"Pipeline error: {exc}")
-                logging.exception("Pipeline error")
-                st.stop()
+    with st.spinner("Running reconciliation pipeline..."):
+        try:
+            result = run_pipeline(gw_path, bank_path, config)
+            out_dir = tmp / "outputs"
+            report_paths = write_all_reports(result, out_dir)
+            metrics = generate_summary_metrics(result)
+
+            st.session_state["result"] = result
+            st.session_state["metrics"] = metrics
+            st.session_state["report_paths"] = report_paths
+            if "approvals" not in st.session_state:
+                st.session_state["approvals"] = {}
+
+            st.success("Reconciliation complete!")
+        except ValueError as exc:
+            st.error(f"Configuration error: {exc}")
+            st.stop()
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Pipeline error: {exc}")
+            logging.exception("Pipeline error")
+            st.stop()
 
 # ---------------------------------------------------------------------------
 # Results display

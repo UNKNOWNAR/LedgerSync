@@ -22,7 +22,7 @@ export default function HeaderNav({ onLaunchClick }: HeaderNavProps) {
         </div>
         <div className="flex items-center gap-2">
           <span className="font-bold text-xs tracking-[0.15em] text-[#F5F7FA] uppercase font-mono">
-            AI Finance Controller
+            LedgerSync
           </span>
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.62rem] font-mono font-medium bg-[#2F80FF]/15 text-[#4DA3FF] border border-[#2F80FF]/25">
             v1.0

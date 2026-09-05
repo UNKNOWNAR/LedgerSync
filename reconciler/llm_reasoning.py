@@ -93,9 +93,9 @@ def reason_match(
     if not config.llm_enabled:
         return _fallback(pair, reason="LLM disabled by configuration")
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
-        return _fallback(pair, reason="ANTHROPIC_API_KEY not set")
+        return _fallback(pair, reason="GROQ_API_KEY not set")
 
     prompt = _build_prompt(pair)
 
@@ -156,22 +156,33 @@ def _build_prompt(pair: CandidatePair) -> str:
 
 
 def _call_api(prompt: str, api_key: str, model: str) -> LLMResult:
-    """Make the actual Anthropic API call and parse the JSON response."""
+    """Make the actual Groq API call and parse the JSON response."""
     try:
-        import anthropic  # imported lazily to avoid hard dep at import time
+        import groq  # imported lazily to avoid hard dep at import time
     except ImportError as exc:
         raise RuntimeError(
-            "anthropic package not installed. Run: pip install anthropic"
+            "groq package not installed. Run: pip install groq"
         ) from exc
 
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
+    client = groq.Groq(api_key=api_key)
+    completion = client.chat.completions.create(
         model=model,
+        messages=[
+            {
+                "role": "system", 
+                "content": "You are a financial reconciliation API. You must output ONLY raw JSON."
+            },
+            {
+                "role": "user", 
+                "content": prompt
+            }
+        ],
+        temperature=0,
         max_tokens=512,
-        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"}
     )
 
-    raw = message.content[0].text.strip()
+    raw = completion.choices[0].message.content.strip()
     parsed = _parse_llm_response(raw)
 
     return LLMResult(

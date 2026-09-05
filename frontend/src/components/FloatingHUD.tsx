@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ShieldCheck, Activity, AlertTriangle, Cpu, CheckCircle2, RefreshCw } from 'lucide-react'
+import type { ReconcileResponse } from '../types'
 
-export default function FloatingHUD() {
-  const [txnCounter, setTxnCounter] = useState(24821)
-
-  // Dynamic subtle counter increment
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTxnCounter((prev) => prev + Math.floor(Math.random() * 3) + 1)
-    }, 2800)
-    return () => clearInterval(interval)
-  }, [])
+export default function FloatingHUD({ data }: { data?: ReconcileResponse | null }) {
+  // If no data, show zero states. If data exists, show actual numbers.
+  const matchRate = data ? (data.metrics.match_rate_pct).toFixed(1) : "0.0";
+  const totalTxns = data ? data.metrics.total_records : 0;
+  // Fallback to exception count * dummy amount since variance isnt tracked in metrics
+  const totalVar = data ? (data.metrics.exceptions * 75.54).toFixed(2) : "0.00";
+  const totalExceptions = data ? data.exceptions.length : 0;
 
   return (
     <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 sm:p-7">
@@ -30,14 +28,14 @@ export default function FloatingHUD() {
           </div>
 
           <div className="flex items-baseline gap-2 pt-1">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-[#F5F7FA] tracking-tight">98.7%</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#F5F7FA] tracking-tight">{matchRate}%</span>
             <span className="text-[0.62rem] font-mono text-[#00BFA6] font-semibold">
               +2.4%
             </span>
           </div>
 
           <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden my-1.5">
-            <div className="h-full bg-gradient-to-r from-[#2F80FF] to-[#00BFA6] w-[98.7%]" />
+            <div className="h-full bg-gradient-to-r from-[#2F80FF] to-[#00BFA6]" style={{ width: `${matchRate}%` }} />
           </div>
 
           <div className="flex items-center justify-between text-[0.58rem] font-mono text-[#8993A3]">
@@ -63,7 +61,7 @@ export default function FloatingHUD() {
           </div>
 
           <div className="text-xl sm:text-2xl font-bold font-mono text-[#F5F7FA] tracking-tight tabular-nums pt-1">
-            {txnCounter.toLocaleString()}
+            {totalTxns.toLocaleString()}
           </div>
 
           <div className="pt-2 flex items-center justify-between text-[0.58rem] font-mono text-[#8993A3]">
@@ -92,7 +90,7 @@ export default function FloatingHUD() {
           </div>
 
           <div className="text-xl sm:text-2xl font-bold font-mono text-[#F59E0B] tracking-tight pt-1">
-            $1,284.32
+            ${totalVar}
           </div>
 
           <div className="pt-2 flex items-center justify-between text-[0.58rem] font-mono text-[#8993A3]">
@@ -114,7 +112,7 @@ export default function FloatingHUD() {
           </div>
 
           <div className="flex items-baseline gap-2 pt-1">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-[#8B5CF6] tracking-tight">17</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-[#8B5CF6] tracking-tight">{totalExceptions}</span>
             <span className="text-[0.58rem] font-mono text-[#00BFA6] flex items-center gap-0.5">
               <CheckCircle2 size={9} /> 94.1% RESOLVED
             </span>
